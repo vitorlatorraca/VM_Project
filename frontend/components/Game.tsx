@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import { useState, useEffect, useMemo } from "react";
+import dynamic from "next/dynamic"; // 🔹 Para carregamento dinâmico
+import { TileLayer, Marker, useMapEvents } from "react-leaflet";
 import axios from "axios";
 import "leaflet/dist/leaflet.css";
 
@@ -26,11 +27,23 @@ interface Feedback {
   yearScore: number;
 }
 
+// 🔹 Importar MapContainer dinamicamente para evitar SSR
+const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), {
+  ssr: false,
+});
+
 const Game: React.FC = () => {
   const [photo, setPhoto] = useState<Photo | null>(null);
   const [guess, setGuess] = useState<Guess>({ lat: 0, lng: 0, year: "" });
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [isClient, setIsClient] = useState(false); // Para garantir que só renderiza no cliente
 
+  // ✅ Garantir que roda apenas no cliente
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // ✅ Buscar foto ao carregar
   useEffect(() => {
     const fetchPhoto = async () => {
       try {
@@ -69,16 +82,14 @@ const Game: React.FC = () => {
 
           <h2 className="text-lg mt-2">Onde e quando essa foto foi tirada?</h2>
 
-          {/* Mapa interativo */}
-          <MapContainer
-            center={[photo.location.latitude, photo.location.longitude]} // ✅ Corrigido
-            zoom={2}
-            className="h-64 w-full"
-          >
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            <Marker position={[guess.lat, guess.lng]} />
-            <MapEvents setGuess={setGuess} />
-          </MapContainer>
+          {/* Mapa interativo - Renderiza SOMENTE no cliente */}
+          {isClient && (
+            <MapContainer center={[photo.location.latitude, photo.location.longitude]} zoom={2} className="h-64 w-full">
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <Marker position={[guess.lat, guess.lng]} />
+              <MapEvents setGuess={setGuess} />
+            </MapContainer>
+          )}
 
           {/* Input para o ano */}
           <input
@@ -110,9 +121,7 @@ const Game: React.FC = () => {
 };
 
 // 📌 Componente para capturar eventos de clique no mapa
-const MapEvents: React.FC<{ setGuess: React.Dispatch<React.SetStateAction<Guess>> }> = ({
-  setGuess,
-}) => {
+const MapEvents: React.FC<{ setGuess: React.Dispatch<React.SetStateAction<Guess>> }> = ({ setGuess }) => {
   useMapEvents({
     click: (e: any) => setGuess((prev) => ({ ...prev, lat: e.latlng.lat, lng: e.latlng.lng })), // ✅ Corrigido
   });
