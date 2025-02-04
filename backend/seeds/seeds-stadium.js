@@ -1,11 +1,12 @@
-// seed.js
 require('dotenv').config();
+console.log("Tentando conectar ao MongoDB com URI:", process.env.MONGO_URI);
+
 const mongoose = require('mongoose');
-const Stadium = require('./models/Stadium');
+const Stadium = require('../models/Stadium');
 
 mongoose.connect(process.env.MONGO_URI)
   .then(async () => {
-    console.log("MongoDB conectado!");
+    console.log("✅ Conectado ao MongoDB!");
 
     const stadiums = [
       {
@@ -19,12 +20,15 @@ mongoose.connect(process.env.MONGO_URI)
         city: "Cidade B",
         capacity: 40000,
         imageUrl: "/assets/stadiums/stadium2.jpg"
-      },
-      // ... até stadium10
+      }
     ];
 
+    console.log("Inserindo estádios...");
     await Stadium.insertMany(stadiums);
-    console.log("Estádios inseridos com sucesso!");
+    console.log("✅ Estádios inseridos com sucesso!");
     process.exit(0);
   })
-  .catch(err => console.error("Erro ao conectar ou inserir:", err));
+  .catch(err => {
+    console.error("❌ Erro ao conectar ou inserir:", err);
+    process.exit(1);
+  });
