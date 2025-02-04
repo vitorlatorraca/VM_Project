@@ -14,6 +14,9 @@ app.use(cors());
 // Importar Rotas
 const authRoutes = require("./routes/authRoutes");
 const photoRoutes = require("./routes/photoRoutes");
+const stadiumRoutes = require("./routes/stadiumRoutes");
+app.use("/api/stadiums", stadiumRoutes);
+
 
 app.use("/api/auth", authRoutes);
 app.use("/api/photos", photoRoutes);
