@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic"; // 🔹 Para carregamento dinâmico
 import { TileLayer, Marker, useMapEvents } from "react-leaflet";
 import axios from "axios";
@@ -8,10 +8,7 @@ import "leaflet/dist/leaflet.css";
 
 // 📌 Tipagem para a estrutura da foto retornada pela API
 interface Photo {
-  _id: string;
   imageUrl: string;
-  location: { latitude: number; longitude: number };
-  year: number;
 }
 
 // 📌 Tipagem para os palpites do usuário
@@ -23,8 +20,8 @@ interface Guess {
 
 // 📌 Tipagem para a resposta da API após enviar um palpite
 interface Feedback {
-  locationScore: number;
-  yearScore: number;
+  locationScore: string;
+  yearScore: string;
 }
 
 // 🔹 Importar MapContainer dinamicamente para evitar SSR
@@ -47,10 +44,12 @@ const Game: React.FC = () => {
   useEffect(() => {
     const fetchPhoto = async () => {
       try {
+        console.log("Chamando API...");
         const res = await axios.get<Photo>("http://localhost:5000/api/photos/random");
+        console.log("Resposta da API:", res.data);
         setPhoto(res.data);
       } catch (error) {
-        console.error("Erro ao buscar foto:::", error);
+        console.error("Erro ao buscar foto:", error);
       }
     };
     fetchPhoto();
@@ -61,7 +60,6 @@ const Game: React.FC = () => {
 
     try {
       const response = await axios.post<Feedback>("http://localhost:5000/api/photos/check", {
-        photoId: photo._id,
         guessedLatitude: guess.lat,
         guessedLongitude: guess.lng,
         guessedYear: parseInt(guess.year),
@@ -78,13 +76,17 @@ const Game: React.FC = () => {
       {photo ? (
         <>
           {/* Imagem do jogo */}
-          <img src={photo.imageUrl} alt="Jogo" className="w-full h-64 object-cover rounded-md" />
+          <img 
+            src={photo.imageUrl} 
+            alt="Jogo" 
+            className="w-full h-64 object-cover rounded-md" 
+          />
 
           <h2 className="text-lg mt-2">Onde e quando essa foto foi tirada?</h2>
 
           {/* Mapa interativo - Renderiza SOMENTE no cliente */}
           {isClient && (
-            <MapContainer center={[photo.location.latitude, photo.location.longitude]} zoom={2} className="h-64 w-full">
+            <MapContainer center={[guess.lat, guess.lng]} zoom={2} className="h-64 w-full">
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
               <Marker position={[guess.lat, guess.lng]} />
               <MapEvents setGuess={setGuess} />
@@ -108,8 +110,8 @@ const Game: React.FC = () => {
           {/* Exibição do feedback */}
           {feedback && (
             <div className="mt-4 p-4 border rounded">
-              <p>📍 Precisão da localização: {feedback.locationScore.toFixed(2)}</p>
-              <p>📅 Precisão do ano: {feedback.yearScore.toFixed(2)}</p>
+              <p>📍 Precisão da localização: {feedback.locationScore}</p>
+              <p>📅 Precisão do ano: {feedback.yearScore}</p>
             </div>
           )}
         </>

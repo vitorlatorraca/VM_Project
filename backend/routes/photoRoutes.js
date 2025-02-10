@@ -1,58 +1,39 @@
 const express = require("express");
-const Photo = require("../models/Photo");
+const fs = require("fs");
+const path = require("path");
 
 const router = express.Router();
 
-// 📌 Obter uma foto aleatória
+// Caminho para a pasta pública no frontend
+const imagesPath = path.join(__dirname, "../../frontend/public/assets/stadiums");
+
+// 📌 Obter uma foto aleatória da pasta pública
 router.get("/random", async (req, res) => {
   try {
-    const count = await Photo.countDocuments();
-    const randomIndex = Math.floor(Math.random() * count);
-    const photo = await Photo.findOne().skip(randomIndex);
+    const files = fs.readdirSync(imagesPath); // Lê os arquivos da pasta
 
-    res.json(photo);
+    if (files.length === 0) {
+      return res.status(404).json({ message: "Nenhuma imagem encontrada" });
+    }
+
+    // Seleciona uma imagem aleatória
+    const randomImage = files[Math.floor(Math.random() * files.length)];
+
+    // Retorna o caminho relativo correto para o frontend
+    res.json({ imageUrl: `/assets/stadiums/${randomImage}` });
   } catch (error) {
-    res.status(500).json({ message: "Erro ao buscar foto" });
+    console.error("Erro ao buscar imagem aleatória:", error);
+    res.status(500).json({ message: "Erro no servidor" });
   }
 });
 
-// 📌 Criar uma nova foto (admin)
+// 📌 Criar uma nova foto (Se for necessário no futuro)
 router.post("/", async (req, res) => {
   try {
     const { imageUrl, location, year } = req.body;
-
-    const newPhoto = new Photo({ imageUrl, location, year });
-    await newPhoto.save();
-
-    res.status(201).json({ message: "Foto adicionada com sucesso!" });
+    res.status(201).json({ message: "Foto adicionada com sucesso!", data: { imageUrl, location, year } });
   } catch (error) {
     res.status(500).json({ message: "Erro ao adicionar foto" });
-  }
-});
-
-// 📌 Verificar se a resposta do jogador está correta
-router.post("/check", async (req, res) => {
-  try {
-    const { photoId, guessedLatitude, guessedLongitude, guessedYear } = req.body;
-    const photo = await Photo.findById(photoId);
-
-    if (!photo) return res.status(404).json({ message: "Foto não encontrada!" });
-
-    const distance = Math.sqrt(
-      Math.pow(guessedLatitude - photo.location.latitude, 2) +
-      Math.pow(guessedLongitude - photo.location.longitude, 2)
-    );
-
-    const yearDifference = Math.abs(guessedYear - photo.year);
-
-    res.json({
-      correctLocation: photo.location,
-      correctYear: photo.year,
-      locationScore: distance < 1 ? "Perfeito!" : distance < 5 ? "Muito perto!" : "Longe!",
-      yearScore: yearDifference === 0 ? "Exato!" : yearDifference <= 2 ? "Quase lá!" : "Muito longe!"
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Erro ao verificar resposta" });
   }
 });
 
