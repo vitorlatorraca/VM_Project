@@ -1,39 +1,76 @@
 const express = require("express");
-const fs = require("fs");
 const path = require("path");
+const fs = require("fs");
 
 const router = express.Router();
+const STADIUMS_PATH = path.join(__dirname, "../public/assets/stadiums");
 
-// Caminho para a pasta pública no frontend
-const imagesPath = path.join(__dirname, "../../frontend/public/assets/stadiums");
-
-// 📌 Obter uma foto aleatória da pasta pública
-router.get("/random", async (req, res) => {
+// 📌 Verificar se a resposta do jogador está correta
+router.post("/check", async (req, res) => {
   try {
-    const files = fs.readdirSync(imagesPath); // Lê os arquivos da pasta
+    const { filename, guessedLatitude, guessedLongitude, guessedYear } = req.body;
 
-    if (files.length === 0) {
-      return res.status(404).json({ message: "Nenhuma imagem encontrada" });
+    if (!filename) {
+      return res.status(400).json({ message: "O nome do arquivo é obrigatório!" });
     }
 
-    // Seleciona uma imagem aleatória
-    const randomImage = files[Math.floor(Math.random() * files.length)];
+    const filePath = path.join(STADIUMS_PATH, filename);
 
-    // Retorna o caminho relativo correto para o frontend
-    res.json({ imageUrl: `/assets/stadiums/${randomImage}` });
-  } catch (error) {
-    console.error("Erro ao buscar imagem aleatória:", error);
-    res.status(500).json({ message: "Erro no servidor" });
-  }
-});
+    // 📌 Verifica se o arquivo existe
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: "Imagem não encontrada!" });
+    }
 
-// 📌 Criar uma nova foto (Se for necessário no futuro)
-router.post("/", async (req, res) => {
-  try {
-    const { imageUrl, location, year } = req.body;
-    res.status(201).json({ message: "Foto adicionada com sucesso!", data: { imageUrl, location, year } });
+    // Simulando dados reais (Substituir se necessário)
+    const correctLocation = { latitude: -23.55052, longitude: -46.633308 }; // Exemplo: São Paulo
+    const correctYear = 1949; // Exemplo de ano correto
+
+    // 📌 Cálculo da distância (fórmula de Haversine)
+    function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * (Math.PI / 180);
+      const dLon = (lon2 - lon1) * (Math.PI / 180);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    const distance = getDistanceFromLatLonInKm(
+      guessedLatitude,
+      guessedLongitude,
+      correctLocation.latitude,
+      correctLocation.longitude
+    );
+
+    // 📌 Cálculo da pontuação da localização
+    let locationScore = 0;
+    if (distance < 10) locationScore = 100;
+    else if (distance < 50) locationScore = 75;
+    else if (distance < 200) locationScore = 50;
+    else if (distance < 500) locationScore = 25;
+    else locationScore = 0;
+
+    // 📌 Cálculo da pontuação do ano
+    const yearDifference = Math.abs(guessedYear - correctYear);
+    let yearScore = 0;
+    if (yearDifference === 0) yearScore = 100;
+    else if (yearDifference <= 2) yearScore = 75;
+    else if (yearDifference <= 5) yearScore = 50;
+    else if (yearDifference <= 10) yearScore = 25;
+    else yearScore = 0;
+
+    res.json({
+      correctLocation,
+      correctYear,
+      locationScore,
+      yearScore
+    });
+
   } catch (error) {
-    res.status(500).json({ message: "Erro ao adicionar foto" });
+    res.status(500).json({ message: "Erro ao verificar resposta", error: error.message });
   }
 });
 
