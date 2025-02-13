@@ -6,12 +6,14 @@ import { TileLayer, Marker, useMapEvents } from "react-leaflet";
 import axios from "axios";
 import "leaflet/dist/leaflet.css";
 
+
+
 // 📌 Tipagem para a estrutura da foto retornada pela API
 interface Photo {
   imageUrl: string;
 }
 
-// 📌 Tipagem para os palpites do usuário
+// 📌 Tipagem para os palpites do usuário.
 interface Guess {
   lat: number;
   lng: number;
@@ -44,12 +46,12 @@ const Game: React.FC = () => {
   useEffect(() => {
     const fetchPhoto = async () => {
       try {
-        console.log("Chamando API...");
+        console.log("📸 Chamando API para buscar imagem...");
         const res = await axios.get<Photo>("http://localhost:5000/api/photos/random");
-        console.log("Resposta da API:", res.data);
+        console.log("✅ Resposta da API (imagem recebida):", res.data);
         setPhoto(res.data);
       } catch (error) {
-        console.error("Erro ao buscar foto:", error);
+        console.error("❌ Erro ao buscar foto:", error);
       }
     };
     fetchPhoto();
@@ -58,16 +60,26 @@ const Game: React.FC = () => {
   const handleSubmit = async () => {
     if (!photo) return;
 
+    // 🔹 Extrair apenas o nome do arquivo da URL da imagem
+    const filename = photo.imageUrl.split("/").pop();
+    if (!filename) {
+      console.error("❌ Erro: Nome do arquivo não encontrado!");
+      return;
+    }
+
     try {
+      console.log("🚀 Enviando palpite para API...");
       const response = await axios.post<Feedback>("http://localhost:5000/api/photos/check", {
+        filename, // 🔹 Agora estamos enviando o nome do arquivo!
         guessedLatitude: guess.lat,
         guessedLongitude: guess.lng,
         guessedYear: parseInt(guess.year),
       });
 
+      console.log("✅ Resposta da API:", response.data);
       setFeedback(response.data);
     } catch (error) {
-      console.error("Erro ao enviar palpite:", error);
+      console.error("❌ Erro ao enviar palpite:", error);
     }
   };
 
@@ -77,10 +89,11 @@ const Game: React.FC = () => {
         <>
           {/* Imagem do jogo */}
           <img 
-            src={photo.imageUrl} 
-            alt="Jogo" 
-            className="w-full h-64 object-cover rounded-md" 
-          />
+  src={`http://localhost:5000${photo.imageUrl}`} 
+  alt="Jogo" 
+  className="w-full h-64 object-cover rounded-md" 
+/>
+
 
           <h2 className="text-lg mt-2">Onde e quando essa foto foi tirada?</h2>
 

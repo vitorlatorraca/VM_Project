@@ -4,6 +4,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const path = require("path");
 
 const app = express();
 
@@ -11,13 +12,15 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// 📌 Servir arquivos estáticos corretamente
+app.use("/assets", express.static(path.join(__dirname, "public/assets")));
+
 // Importar Rotas
 const authRoutes = require("./routes/authRoutes");
 const photoRoutes = require("./routes/photoRoutes");
 const stadiumRoutes = require("./routes/stadiumRoutes");
+
 app.use("/api/stadiums", stadiumRoutes);
-
-
 app.use("/api/auth", authRoutes);
 app.use("/api/photos", photoRoutes);
 

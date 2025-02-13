@@ -5,6 +5,21 @@ const fs = require("fs");
 const router = express.Router();
 const STADIUMS_PATH = path.join(__dirname, "../public/assets/stadiums");
 
+// 📌 Retorna uma imagem aleatória da pasta stadiums
+router.get("/random", async (req, res) => {
+  try {
+    const files = fs.readdirSync(STADIUMS_PATH); // Lista todos os arquivos na pasta
+    if (files.length === 0) {
+      return res.status(404).json({ message: "Nenhuma imagem encontrada!" });
+    }
+
+    const randomFile = files[Math.floor(Math.random() * files.length)]; // Escolhe um aleatório
+    res.json({ imageUrl: `/assets/stadiums/${randomFile}` }); // Retorna o caminho correto
+  } catch (error) {
+    res.status(500).json({ message: "Erro ao buscar foto", error: error.message });
+  }
+});
+
 // 📌 Verificar se a resposta do jogador está correta
 router.post("/check", async (req, res) => {
   try {
@@ -21,7 +36,7 @@ router.post("/check", async (req, res) => {
       return res.status(404).json({ message: "Imagem não encontrada!" });
     }
 
-    // Simulando dados reais (Substituir se necessário)
+    // 🔹 Simulando dados reais (Substituir se necessário)
     const correctLocation = { latitude: -23.55052, longitude: -46.633308 }; // Exemplo: São Paulo
     const correctYear = 1949; // Exemplo de ano correto
 
