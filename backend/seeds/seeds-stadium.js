@@ -34,24 +34,20 @@ mongoose.connect(process.env.MONGO_URI)
         city: "Rio de Janeiro",
         capacity: 46931,
         imageUrl: "/assets/stadiums/stadium3.jpg",
-        location: { lat: -22.8939, lng: -43.2933 }, // 📍 Estádio Nilton Santos (Engenhão)
+        location: { lat: -22.8939, lng: -43.2933 }, // 📍 Estádio Nilton Santos (Engenhão.)
         year: 2024, // 📅 Ano da foto
         matchScore: "Botafogo 1 x 1 São Paulo" // ⚽ Placar do jogo
       }
     ];
 
-    console.log("🔍 Inserindo ou atualizando estádios...");
+    console.log("🗑️ Deletando todos os estádios existentes...");
+    await Stadium.deleteMany({});
+    console.log("✅ Todos os estádios antigos foram removidos!");
 
-    for (const stadium of stadiums) {
-      await Stadium.findOneAndUpdate(
-        { name: stadium.name, city: stadium.city }, // 🔍 Busca pelo nome e cidade
-        stadium, // 🔄 Atualiza com os novos dados
-        { upsert: true, new: true } // ✅ Cria se não existir, atualiza se já existir
-      );
-      console.log(`✅ Estádio atualizado: ${stadium.name}`);
-    }
-
-    console.log("🎉 Processo finalizado!");
+    console.log("🔍 Inserindo novos estádios...");
+    await Stadium.insertMany(stadiums);
+    
+    console.log("🎉 Estádios inseridos com sucesso!");
     process.exit(0);
   })
   .catch(err => {
