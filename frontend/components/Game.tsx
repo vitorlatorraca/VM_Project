@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic"; // 🔹 Para carregamento dinâmico
-import { TileLayer, Marker, useMapEvents } from "react-leaflet";
+import { TileLayer, Marker, Popup } from "react-leaflet";
 import axios from "axios";
 import "leaflet/dist/leaflet.css";
-
-
+import L from "leaflet";
 
 // 📌 Tipagem para a estrutura da foto retornada pela API
 interface Photo {
@@ -29,6 +28,23 @@ interface Feedback {
 // 🔹 Importar MapContainer dinamicamente para evitar SSR
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), {
   ssr: false,
+});
+
+// 📌 Componente para capturar eventos de clique no mapa
+const MapEvents: React.FC<{ setGuess: React.Dispatch<React.SetStateAction<Guess>> }> = ({ setGuess }) => {
+  const { useMapEvents } = require("react-leaflet"); // Importação dinâmica para evitar SSR
+  useMapEvents({
+    click: (e: any) => setGuess((prev) => ({ ...prev, lat: e.latlng.lat, lng: e.latlng.lng })), // ✅ Atualiza corretamente
+  });
+  return null;
+};
+
+// 🔹 Corrige os ícones do Leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "/leaflet/marker-icon-2x.png",
+  iconUrl: "/leaflet/marker-icon.png",
+  shadowUrl: "/leaflet/marker-shadow.png",
 });
 
 const Game: React.FC = () => {
@@ -89,21 +105,26 @@ const Game: React.FC = () => {
         <>
           {/* Imagem do jogo */}
           <img 
-  src={`http://localhost:5000${photo.imageUrl}`} 
-  alt="Jogo" 
-  className="w-full h-64 object-cover rounded-md" 
-/>
-
+            src={`http://localhost:5000${photo.imageUrl}`} 
+            alt="Jogo" 
+            className="w-full h-64 object-cover rounded-md" 
+          />
 
           <h2 className="text-lg mt-2">Onde e quando essa foto foi tirada?</h2>
 
           {/* Mapa interativo - Renderiza SOMENTE no cliente */}
           {isClient && (
-            <MapContainer center={[guess.lat, guess.lng]} zoom={2} className="h-64 w-full">
-              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-              <Marker position={[guess.lat, guess.lng]} />
-              <MapEvents setGuess={setGuess} />
-            </MapContainer>
+            <div className="h-64 w-full">
+              <MapContainer center={[0, 0]} zoom={2} className="h-full w-full">
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                {guess.lat !== 0 && guess.lng !== 0 && (
+                  <Marker position={[guess.lat, guess.lng]}>
+                    <Popup>Você escolheu este local!</Popup>
+                  </Marker>
+                )}
+                <MapEvents setGuess={setGuess} />
+              </MapContainer>
+            </div>
           )}
 
           {/* Input para o ano */}
@@ -133,14 +154,6 @@ const Game: React.FC = () => {
       )}
     </div>
   );
-};
-
-// 📌 Componente para capturar eventos de clique no mapa
-const MapEvents: React.FC<{ setGuess: React.Dispatch<React.SetStateAction<Guess>> }> = ({ setGuess }) => {
-  useMapEvents({
-    click: (e: any) => setGuess((prev) => ({ ...prev, lat: e.latlng.lat, lng: e.latlng.lng })), // ✅ Corrigido
-  });
-  return null;
 };
 
 export default Game;
