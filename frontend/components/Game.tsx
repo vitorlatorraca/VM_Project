@@ -26,7 +26,7 @@ interface Feedback {
 }
 
 // 🔹 Importar MapContainer dinamicamente para evitar SSR
-const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), {
+const MapContainer = dynamic(( ) => import("react-leaflet").then((mod) => mod.MapContainer), {
   ssr: false,
 });
 
