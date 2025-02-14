@@ -13,7 +13,7 @@ interface Photo {
   imageUrl: string;
 }
 
-// 📌 Tipagem para os palpites do usuário.
+// 📌 Tipagem para os palpites do usuário!
 interface Guess {
   lat: number;
   lng: number;
