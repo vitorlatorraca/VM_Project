@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import dynamic from "next/dynamic"; // 🔹 Para carregamento dinâmico
+import dynamic from "next/dynamic";
 import { TileLayer, Marker, Popup } from "react-leaflet";
 import axios from "axios";
 import "leaflet/dist/leaflet.css";
@@ -10,6 +10,10 @@ import L from "leaflet";
 // 📌 Tipagem para a estrutura da foto retornada pela API
 interface Photo {
   imageUrl: string;
+  stadiumName: string;
+  location: { lat: number; lng: number };
+  year: number;
+  matchScore: string;
 }
 
 // 📌 Tipagem para os palpites do usuário!
@@ -17,24 +21,30 @@ interface Guess {
   lat: number;
   lng: number;
   year: string;
+  stadiumName: string;
+  team1: string;
+  score1: string;
+  team2: string;
+  score2: string;
 }
 
 // 📌 Tipagem para a resposta da API após enviar um palpite
 interface Feedback {
   locationScore: string;
   yearScore: string;
+  matchScoreCorrect: boolean;
 }
 
 // 🔹 Importar MapContainer dinamicamente para evitar SSR
-const MapContainer = dynamic(( ) => import("react-leaflet").then((mod) => mod.MapContainer), {
+const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), {
   ssr: false,
 });
 
 // 📌 Componente para capturar eventos de clique no mapa
 const MapEvents: React.FC<{ setGuess: React.Dispatch<React.SetStateAction<Guess>> }> = ({ setGuess }) => {
-  const { useMapEvents } = require("react-leaflet"); // Importação dinâmica para evitar SSR
+  const { useMapEvents } = require("react-leaflet");
   useMapEvents({
-    click: (e: any) => setGuess((prev) => ({ ...prev, lat: e.latlng.lat, lng: e.latlng.lng })), // ✅ Atualiza corretamente
+    click: (e: any) => setGuess((prev) => ({ ...prev, lat: e.latlng.lat, lng: e.latlng.lng })),
   });
   return null;
 };
@@ -49,11 +59,19 @@ L.Icon.Default.mergeOptions({
 
 const Game: React.FC = () => {
   const [photo, setPhoto] = useState<Photo | null>(null);
-  const [guess, setGuess] = useState<Guess>({ lat: 0, lng: 0, year: "" });
+  const [guess, setGuess] = useState<Guess>({
+    lat: 0,
+    lng: 0,
+    year: "",
+    stadiumName: "",
+    team1: "",
+    score1: "",
+    team2: "",
+    score2: "",
+  });
   const [feedback, setFeedback] = useState<Feedback | null>(null);
-  const [isClient, setIsClient] = useState(false); // Para garantir que só renderiza no cliente
+  const [isClient, setIsClient] = useState(false);
 
-  // ✅ Garantir que roda apenas no cliente
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -73,30 +91,30 @@ const Game: React.FC = () => {
     fetchPhoto();
   }, []);
 
+  const normalizeText = (text: string) => text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
   const handleSubmit = async () => {
     if (!photo) return;
 
-    // 🔹 Extrair apenas o nome do arquivo da URL da imagem
-    const filename = photo.imageUrl.split("/").pop();
-    if (!filename) {
-      console.error("❌ Erro: Nome do arquivo não encontrado!");
-      return;
-    }
+    // 🔹 Verifica se a localização e o ano estão corretos
+    const isLocationCorrect =
+      Math.abs(guess.lat - photo.location.lat) < 0.1 && Math.abs(guess.lng - photo.location.lng) < 0.1;
+    const isYearCorrect = parseInt(guess.year) === photo.year;
 
-    try {
-      console.log("🚀 Enviando palpite para API...");
-      const response = await axios.post<Feedback>("http://localhost:5000/api/photos/check", {
-        filename, // 🔹 Agora estamos enviando o nome do arquivo!
-        guessedLatitude: guess.lat,
-        guessedLongitude: guess.lng,
-        guessedYear: parseInt(guess.year),
-      });
+    // 🔹 Verifica o nome do estádio ignorando acentos e maiúsculas
+    const isStadiumCorrect = normalizeText(guess.stadiumName) === normalizeText(photo.stadiumName);
 
-      console.log("✅ Resposta da API:", response.data);
-      setFeedback(response.data);
-    } catch (error) {
-      console.error("❌ Erro ao enviar palpite:", error);
-    }
+    // 🔹 Verifica o placar (ignora maiúsculas e acentos nos nomes dos times)
+    const matchScoreGuess = `${normalizeText(guess.team1)} ${guess.score1} x ${guess.score2} ${normalizeText(
+      guess.team2
+    )}`;
+    const matchScoreCorrect = normalizeText(matchScoreGuess) === normalizeText(photo.matchScore);
+
+    setFeedback({
+      locationScore: isLocationCorrect ? "✅ Localização correta!" : "❌ Localização errada!",
+      yearScore: isYearCorrect ? "✅ Ano correto!" : "❌ Ano errado!",
+      matchScoreCorrect,
+    });
   };
 
   return (
@@ -104,13 +122,22 @@ const Game: React.FC = () => {
       {photo ? (
         <>
           {/* Imagem do jogo */}
-          <img 
-            src={`http://localhost:5000${photo.imageUrl}`} 
-            alt="Jogo" 
-            className="w-full h-64 object-cover rounded-md" 
+          <img
+            src={`http://localhost:5000${photo.imageUrl}`}
+            alt="Jogo"
+            className="w-full h-64 object-cover rounded-md"
           />
 
           <h2 className="text-lg mt-2">Onde e quando essa foto foi tirada?</h2>
+
+          {/* Barra de pesquisa para estádio */}
+          <input
+            type="text"
+            placeholder="Digite o nome do estádio"
+            value={guess.stadiumName}
+            onChange={(e) => setGuess({ ...guess, stadiumName: e.target.value })}
+            className="mt-2 p-2 border rounded w-full"
+          />
 
           {/* Mapa interativo - Renderiza SOMENTE no cliente */}
           {isClient && (
@@ -136,6 +163,38 @@ const Game: React.FC = () => {
             className="mt-2 p-2 border rounded w-full"
           />
 
+          {/* Inputs para o placar */}
+          <div className="mt-4 grid grid-cols-4 gap-2">
+            <input
+              type="text"
+              placeholder="Time 1"
+              value={guess.team1}
+              onChange={(e) => setGuess({ ...guess, team1: e.target.value })}
+              className="p-2 border rounded"
+            />
+            <input
+              type="number"
+              placeholder="Gols"
+              value={guess.score1}
+              onChange={(e) => setGuess({ ...guess, score1: e.target.value })}
+              className="p-2 border rounded"
+            />
+            <input
+              type="number"
+              placeholder="Gols"
+              value={guess.score2}
+              onChange={(e) => setGuess({ ...guess, score2: e.target.value })}
+              className="p-2 border rounded"
+            />
+            <input
+              type="text"
+              placeholder="Time 2"
+              value={guess.team2}
+              onChange={(e) => setGuess({ ...guess, team2: e.target.value })}
+              className="p-2 border rounded"
+            />
+          </div>
+
           {/* Botão de envio */}
           <button onClick={handleSubmit} className="mt-2 p-2 bg-blue-500 text-white rounded">
             Enviar Resposta
@@ -144,8 +203,9 @@ const Game: React.FC = () => {
           {/* Exibição do feedback */}
           {feedback && (
             <div className="mt-4 p-4 border rounded">
-              <p>📍 Precisão da localização: {feedback.locationScore}</p>
-              <p>📅 Precisão do ano: {feedback.yearScore}</p>
+              <p>{feedback.locationScore}</p>
+              <p>{feedback.yearScore}</p>
+              <p>{feedback.matchScoreCorrect ? "✅ Placar correto!" : "❌ Placar errado!"}</p>
             </div>
           )}
         </>
