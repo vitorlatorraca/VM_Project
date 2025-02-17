@@ -10,7 +10,7 @@ const StadiumSchema = new mongoose.Schema({
     lng: { type: Number, required: true }
   }, // 📍 Adicionando a localização
   year: { type: Number, required: true }, // 📅 Adicionando o ano da foto.
-  matchScore: { type: String, required: true } // ⚽ Adicionando o placar do jogo
+  matchScore: { type: String, required: true } // ⚽ Adicionando o placar do jogo.
 });
 
 module.exports = mongoose.model('Stadium', StadiumSchema);
