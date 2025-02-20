@@ -17,15 +17,25 @@ router.get("/", async (req, res) => {
 router.get("/random", async (req, res) => {
   try {
     const stadiums = await Stadium.find();
-    if (stadiums.length === 0) {
-      return res.status(404).json({ message: "Nenhum estádio encontrado" });
+
+    if (!stadiums || stadiums.length === 0) {
+      return res.status(404).json({ message: "Nenhum estádio encontrado no banco de dados" });
     }
+
     const randomIndex = Math.floor(Math.random() * stadiums.length);
-    res.json(stadiums[randomIndex]);
+    const selectedStadium = stadiums[randomIndex];
+
+    if (!selectedStadium.location || typeof selectedStadium.location.lat === "undefined") {
+      return res.status(500).json({ message: "Erro: O estádio selecionado não tem uma localização válida!" });
+    }
+
+    console.log("🏟️ Estádio selecionado:", selectedStadium);
+    res.json(selectedStadium);
   } catch (error) {
-    console.error("Erro ao buscar estádio aleatório:", error);
+    console.error("❌ Erro ao buscar estádio aleatório:", error);
     res.status(500).json({ message: "Erro no servidor ao buscar estádio" });
   }
 });
+
 
 module.exports = router;

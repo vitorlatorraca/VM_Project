@@ -5,13 +5,13 @@ import dynamic from "next/dynamic";
 import { TileLayer, Marker, Popup } from "react-leaflet";
 import axios from "axios";
 import "leaflet/dist/leaflet.css";
-import L from "leaflet";
+import * as L from "leaflet";
 
 // 📌 Tipagem para a estrutura da foto retornada pela API
 interface Photo {
   imageUrl: string;
   stadiumName: string;
-  location: { lat: number; lng: number };
+  location?: { lat: number; lng: number }; // Agora é opcional para evitar erro antes da API carregar
   year: number;
   matchScore: string;
 }
@@ -81,7 +81,7 @@ const Game: React.FC = () => {
     const fetchPhoto = async () => {
       try {
         console.log("📸 Chamando API para buscar imagem...");
-        const res = await axios.get<Photo>("http://localhost:5000/api/photos/random");
+        const res = await axios.get<Photo>("http://localhost:5000/api/stadiums/random"); // 📌 Mudado para stadiums!
         console.log("✅ Resposta da API (imagem recebida):", res.data);
         setPhoto(res.data);
       } catch (error) {
@@ -91,10 +91,15 @@ const Game: React.FC = () => {
     fetchPhoto();
   }, []);
 
-  const normalizeText = (text: string) => text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const normalizeText = (text: string) => text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
 
   const handleSubmit = async () => {
-    if (!photo) return;
+    console.log("📸 Dados da foto no momento do submit:", photo);
+
+    if (!photo || !photo.location) {
+      console.error("❌ Erro: photo ou photo.location está undefined!");
+      return;
+    }
 
     // 🔹 Verifica se a localização e o ano estão corretos
     const isLocationCorrect =
@@ -110,12 +115,22 @@ const Game: React.FC = () => {
     )}`;
     const matchScoreCorrect = normalizeText(matchScoreGuess) === normalizeText(photo.matchScore);
 
-    setFeedback({
+    const newFeedback = {
       locationScore: isLocationCorrect ? "✅ Localização correta!" : "❌ Localização errada!",
       yearScore: isYearCorrect ? "✅ Ano correto!" : "❌ Ano errado!",
       matchScoreCorrect,
-    });
+    };
+
+    console.log("🟢 Atualizando feedback com:", newFeedback);
+    setFeedback(newFeedback);
   };
+
+  // 🚀 Depuração para verificar mudanças em feedback
+  useEffect(() => {
+    if (feedback) {
+      console.log("🔄 Estado de feedback atualizado:", feedback);
+    }
+  }, [feedback]);
 
   return (
     <div className="p-4">
@@ -165,42 +180,14 @@ const Game: React.FC = () => {
 
           {/* Inputs para o placar */}
           <div className="mt-4 grid grid-cols-4 gap-2">
-            <input
-              type="text"
-              placeholder="Time 1"
-              value={guess.team1}
-              onChange={(e) => setGuess({ ...guess, team1: e.target.value })}
-              className="p-2 border rounded"
-            />
-            <input
-              type="number"
-              placeholder="Gols"
-              value={guess.score1}
-              onChange={(e) => setGuess({ ...guess, score1: e.target.value })}
-              className="p-2 border rounded"
-            />
-            <input
-              type="number"
-              placeholder="Gols"
-              value={guess.score2}
-              onChange={(e) => setGuess({ ...guess, score2: e.target.value })}
-              className="p-2 border rounded"
-            />
-            <input
-              type="text"
-              placeholder="Time 2"
-              value={guess.team2}
-              onChange={(e) => setGuess({ ...guess, team2: e.target.value })}
-              className="p-2 border rounded"
-            />
+            <input type="text" placeholder="Time 1" onChange={(e) => setGuess({ ...guess, team1: e.target.value })} className="p-2 border rounded" />
+            <input type="number" placeholder="Gols" onChange={(e) => setGuess({ ...guess, score1: e.target.value })} className="p-2 border rounded" />
+            <input type="number" placeholder="Gols" onChange={(e) => setGuess({ ...guess, score2: e.target.value })} className="p-2 border rounded" />
+            <input type="text" placeholder="Time 2" onChange={(e) => setGuess({ ...guess, team2: e.target.value })} className="p-2 border rounded" />
           </div>
 
-          {/* Botão de envio */}
-          <button onClick={handleSubmit} className="mt-2 p-2 bg-blue-500 text-white rounded">
-            Enviar Resposta
-          </button>
+          <button onClick={handleSubmit} className="mt-2 p-2 bg-blue-500 text-white rounded">Enviar Resposta</button>
 
-          {/* Exibição do feedback */}
           {feedback && (
             <div className="mt-4 p-4 border rounded">
               <p>{feedback.locationScore}</p>
@@ -209,9 +196,7 @@ const Game: React.FC = () => {
             </div>
           )}
         </>
-      ) : (
-        <p>Carregando...</p>
-      )}
+      ) : <p>Carregando...</p>}
     </div>
   );
 };
