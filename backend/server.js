@@ -19,10 +19,13 @@ app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 const authRoutes = require("./routes/authRoutes");
 const photoRoutes = require("./routes/photoRoutes");
 const stadiumRoutes = require("./routes/stadiumRoutes");
+const playerRoutes = require("./routes/playerRoutes"); // ✅ Importando nova rota
 
+// Adicionar as rotas na aplicação
 app.use("/api/stadiums", stadiumRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/photos", photoRoutes);
+app.use("/api/players", playerRoutes); // ✅ Nova rota de players adicionada
 
 // Verificar se a URL do MongoDB está definida
 if (!process.env.MONGO_URI) {

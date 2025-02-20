@@ -18,12 +18,14 @@ export default function Home() {
           </Card>
         </Link>
 
-        <Card className="p-4 opacity-50">
-          <CardContent>
-            <h2 className="font-bold text-lg">Jogo 2</h2>
-            <p>Outro jogo emocionante em breve.</p>
-          </CardContent>
-        </Card>
+        <Link href="/game2">
+          <Card className="p-4 cursor-pointer hover:shadow-lg transition">
+            <CardContent>
+              <h2 className="font-bold text-lg">Jogo 2</h2>
+              <p>Descubra o jogador a partir da imagem borrada.</p>
+            </CardContent>
+          </Card>
+        </Link>
 
         <Card className="p-4 opacity-50">
           <CardContent>
