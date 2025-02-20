@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Game from "@/components/Game";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 
 const Home = () => {
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
