@@ -6,6 +6,11 @@ import axios from "axios";
 interface Player {
   imagePath: string;
   playerName: string;
+  fullName: string;
+  club: string;
+  age: number;
+  position: string;
+  shirtNumber: number;
 }
 
 const MAX_ATTEMPTS = 7;
@@ -16,6 +21,7 @@ const Game2: React.FC = () => {
   const [attempts, setAttempts] = useState(0);
   const [blurLevel, setBlurLevel] = useState(10);
   const [message, setMessage] = useState("");
+  const [hints, setHints] = useState<{ club?: string; age?: string; position?: string; shirtNumber?: string }>({});
 
   useEffect(() => {
     const fetchPlayer = async () => {
@@ -31,15 +37,24 @@ const Game2: React.FC = () => {
 
   const handleSubmit = () => {
     if (!player) return;
-    
+
     if (guess.toLowerCase() === player.playerName.toLowerCase()) {
       setMessage("🎉 Parabéns! Você acertou!");
     } else {
       if (attempts + 1 >= MAX_ATTEMPTS) {
-        setMessage(`😢 Fim de jogo! O jogador era ${player.playerName}`);
+        setMessage(`😢 Fim de jogo! O jogador era ${player.fullName}`);
       } else {
         setAttempts(attempts + 1);
-        setBlurLevel(Math.max(0, blurLevel - 2)); // Reduz o blur a cada erro
+        setBlurLevel(Math.max(0, blurLevel - 2));
+
+        // Mostrar dicas progressivamente
+        const newHints = { ...hints };
+        if (!hints.club) newHints.club = `Clube: ${player.club}`;
+        else if (!hints.age) newHints.age = `Idade: ${player.age}`;
+        else if (!hints.position) newHints.position = `Posição: ${player.position}`;
+        else if (!hints.shirtNumber) newHints.shirtNumber = `Camisa: #${player.shirtNumber}`;
+
+        setHints(newHints);
         setMessage("❌ Errado! Tente novamente.");
       }
     }
@@ -58,7 +73,7 @@ const Game2: React.FC = () => {
                 src={player.imagePath}
                 alt="Jogador"
                 className="w-64 h-64 object-cover rounded-md"
-                style={{ filter: `blur(${blurLevel}px)` }} // Aplica o efeito de blur
+                style={{ filter: `blur(${blurLevel}px)` }}
               />
             </div>
 
@@ -79,6 +94,13 @@ const Game2: React.FC = () => {
 
             <p className="mt-4 text-center">{message}</p>
             <p className="text-gray-600 text-center mt-2">Tentativas restantes: {MAX_ATTEMPTS - attempts}</p>
+
+            {/* Exibir dicas */}
+            <div className="mt-4 text-center">
+              {Object.values(hints).map((hint, index) => (
+                <p key={index} className="text-gray-800 font-semibold">{hint}</p>
+              ))}
+            </div>
           </>
         ) : (
           <p className="text-center">Carregando...</p>

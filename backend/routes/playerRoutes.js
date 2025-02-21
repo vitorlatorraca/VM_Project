@@ -1,5 +1,5 @@
 const express = require("express");
-const Player = require("../models/Player"); // Certifique-se de que este caminho está correto
+const Player = require("../models/Player");
 
 const router = express.Router();
 
