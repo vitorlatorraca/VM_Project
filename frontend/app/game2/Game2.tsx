@@ -19,7 +19,7 @@ const Game2: React.FC = () => {
   const [player, setPlayer] = useState<Player | null>(null);
   const [guess, setGuess] = useState("");
   const [attempts, setAttempts] = useState(0);
-  const [blurLevel, setBlurLevel] = useState(10);
+  const [blurLevel, setBlurLevel] = useState(20);
   const [message, setMessage] = useState("");
   const [hints, setHints] = useState<{ club?: string; age?: string; position?: string; shirtNumber?: string }>({});
 
@@ -40,12 +40,13 @@ const Game2: React.FC = () => {
 
     if (guess.toLowerCase() === player.playerName.toLowerCase()) {
       setMessage("🎉 Parabéns! Você acertou!");
+      setBlurLevel(0); // Remove completamente o blur ao acertar
     } else {
       if (attempts + 1 >= MAX_ATTEMPTS) {
         setMessage(`😢 Fim de jogo! O jogador era ${player.fullName}`);
       } else {
         setAttempts(attempts + 1);
-        setBlurLevel(Math.max(0, blurLevel - 2));
+        setBlurLevel(Math.max(0, blurLevel - 4));
 
         // Mostrar dicas progressivamente
         const newHints = { ...hints };
@@ -62,17 +63,17 @@ const Game2: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-gray-100">
-      <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-2xl">
-        <h1 className="text-2xl font-bold text-center mb-4">Adivinhe o Jogador</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-gray-900 text-white">
+      <div className="bg-gray-800 shadow-lg rounded-lg p-6 w-full max-w-2xl text-center">
+        <h1 className="text-2xl font-bold mb-4">Adivinhe o Jogador</h1>
 
         {player ? (
           <>
             <div className="flex justify-center mb-4">
               <img
-                src={player.imagePath}
+                src={`http://localhost:5000${player.imagePath}`}
                 alt="Jogador"
-                className="w-64 h-64 object-cover rounded-md"
+                className="w-64 h-64 object-cover rounded-md transition-all duration-500"
                 style={{ filter: `blur(${blurLevel}px)` }}
               />
             </div>
@@ -82,7 +83,7 @@ const Game2: React.FC = () => {
               placeholder="Digite o nome do jogador"
               value={guess}
               onChange={(e) => setGuess(e.target.value)}
-              className="p-2 border rounded w-full text-center"
+              className="p-2 border rounded w-full text-black text-center"
             />
 
             <button
@@ -92,18 +93,18 @@ const Game2: React.FC = () => {
               Enviar Resposta
             </button>
 
-            <p className="mt-4 text-center">{message}</p>
-            <p className="text-gray-600 text-center mt-2">Tentativas restantes: {MAX_ATTEMPTS - attempts}</p>
+            <p className="mt-4">{message}</p>
+            <p className="text-gray-400 mt-2">Tentativas restantes: {MAX_ATTEMPTS - attempts}</p>
 
             {/* Exibir dicas */}
-            <div className="mt-4 text-center">
-              {Object.values(hints).map((hint, index) => (
-                <p key={index} className="text-gray-800 font-semibold">{hint}</p>
+            <div className="mt-4 flex flex-wrap justify-center gap-3">
+              {Object.entries(hints).map(([key, hint], index) => (
+                <span key={index} className="bg-gray-700 px-3 py-1 rounded text-sm font-semibold">{hint}</span>
               ))}
             </div>
           </>
         ) : (
-          <p className="text-center">Carregando...</p>
+          <p>Carregando...</p>
         )}
       </div>
     </div>

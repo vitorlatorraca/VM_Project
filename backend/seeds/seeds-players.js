@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const fs = require("fs");
 const path = require("path");
 const Player = require("../models/Player");
+const Team = require("../models/Team"); // Importa o modelo do time
 
 console.log("🔍 Verificando MONGO_URI:", process.env.MONGO_URI);
 const mongoURI = process.env.MONGO_URI;
@@ -19,6 +20,16 @@ mongoose
 
     // Remover jogadores antigos
     await Player.deleteMany({});
+    await Team.deleteMany({}); // Remove times antigos antes de recriar
+
+    // Criar times
+    const teams = await Team.insertMany([
+      { name: "Corinthians", logoPath: "/assets/teams/corinthians.png" },
+      { name: "Atlético de Madrid", logoPath: "/assets/teams/atletico_madrid.png" }
+    ]);
+
+    const corinthians = teams.find(team => team.name === "Corinthians");
+    const atleticoMadrid = teams.find(team => team.name === "Atlético de Madrid");
 
     // Lista de jogadores a serem inseridos
     const players = [
@@ -26,32 +37,32 @@ mongoose
         imagePath: "/assets/players/Garro.jpg",
         playerName: "Garro",
         fullName: "Rodrigo Garro",
-        club: "Corinthians",
         age: 26,
         position: "Meia",
-        shirtNumber: 10
+        shirtNumber: 10,
+        team: corinthians._id // Relacionando ao time correto
       },
       {
         imagePath: "/assets/players/memphis.jpg",
         playerName: "Memphis",
         fullName: "Memphis Depay",
-        club: "Atlético de Madrid",
         age: 30,
         position: "Atacante",
-        shirtNumber: 9
+        shirtNumber: 9,
+        team: corinthians._id
       },
       {
         imagePath: "/assets/players/yurialberto.jpg",
         playerName: "Yuri Alberto",
         fullName: "Yuri Alberto Monteiro",
-        club: "Corinthians",
         age: 23,
         position: "Atacante",
-        shirtNumber: 9
+        shirtNumber: 9,
+        team: corinthians._id
       }
     ];
 
-    // Inserir no MongoDB
+    // Inserir jogadores no MongoDB
     await Player.insertMany(players);
 
     console.log("✅ Seed de jogadores inserido com sucesso!");
