@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -17,11 +19,13 @@ const authRoutes = require("./routes/authRoutes");
 const photoRoutes = require("./routes/photoRoutes");
 const stadiumRoutes = require("./routes/stadiumRoutes");
 const playerRoutes = require("./routes/playerRoutes"); // 📌 Adicionando a nova rota
+const firstElevenRoutes = require("./routes/firstElevenRoutes");
 
 app.use("/api/stadiums", stadiumRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/photos", photoRoutes);
 app.use("/api/players", playerRoutes); // 📌 Nova rota para jogadores
+app.use("/api/first-eleven", firstElevenRoutes);
 
 // Conectar ao MongoDB
 mongoose.connect(process.env.MONGO_URI)

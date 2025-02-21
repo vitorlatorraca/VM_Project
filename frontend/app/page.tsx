@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardContent } from "../components/ui/card";
 import { motion } from "framer-motion";
 
 export default function Home() {
@@ -50,16 +49,18 @@ export default function Home() {
           </motion.div>
         </Link>
 
-        {/* Jogo 3 (em breve) */}
-        <motion.div
-          className="bg-gray-100 shadow-md rounded-2xl p-6 border border-gray-300 text-center opacity-70"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.8 }}
-        >
-          <h2 className="text-2xl font-bold mb-3 text-gray-500">🔮 Jogo 3</h2>
-          <p className="text-gray-500">Novidade chegando...</p>
-        </motion.div>
+        {/* Jogo 3 agora está ativado */}
+        <Link href="/game3" className="transform hover:scale-105 transition">
+          <motion.div
+            className="bg-white shadow-xl rounded-2xl p-6 border border-yellow-500 hover:shadow-yellow-400/50 text-center transition-all"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.8 }}
+          >
+            <h2 className="text-2xl font-bold mb-3 text-yellow-500">⚽ Jogo 3</h2>
+            <p className="text-gray-600">Monte a escalação correta e teste seus conhecimentos!</p>
+          </motion.div>
+        </Link>
       </div>
 
       {/* Rodapé */}
