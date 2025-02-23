@@ -18,7 +18,7 @@ app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 const authRoutes = require("./routes/authRoutes");
 const photoRoutes = require("./routes/photoRoutes");
 const stadiumRoutes = require("./routes/stadiumRoutes");
-const playerRoutes = require("./routes/playerRoutes"); // 📌 Adicionando a nova rota
+const playerRoutes = require("./routes/playerRoutes"); // 📌 Adicionando a nova rota.
 const firstElevenRoutes = require("./routes/firstElevenRoutes");
 
 app.use("/api/stadiums", stadiumRoutes);
