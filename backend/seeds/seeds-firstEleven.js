@@ -1,6 +1,6 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
-const FirstEleven = require("../models/firstEleven"); // Caminho corrigido!
+const FirstEleven = require("../models/firstEleven"); // Caminho corrigido!!!
 
 console.log("🔍 Verificando MONGO_URI:", process.env.MONGO_URI);
 const mongoURI = process.env.MONGO_URI;
