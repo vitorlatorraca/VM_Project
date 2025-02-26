@@ -1,6 +1,6 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
-const FirstEleven = require("../models/firstEleven"); // Caminho corrigido!!!
+const FirstEleven = require("../models/firstEleven");
 
 console.log("🔍 Verificando MONGO_URI:", process.env.MONGO_URI);
 const mongoURI = process.env.MONGO_URI;
@@ -18,32 +18,40 @@ mongoose.connect(mongoURI).then(async () => {
   const firstElevens = [
     {
       match: "Final da Copa do Brasil 2022",
+      date: "19/10/2022",
+      team: "Corinthians",
+      opponent: "Flamengo",
       players: [
-        { position: "Goleiro", playerName: "Cássio", imagePath: "/assets/players/cassio.jpg", shirtNumber: 12 },
-        { position: "Lateral Direito", playerName: "Fagner", imagePath: "/assets/players/fagner.jpg", shirtNumber: 23 },
-        { position: "Zagueiro", playerName: "Gil", imagePath: "/assets/players/gil.jpg", shirtNumber: 4 },
-        { position: "Zagueiro", playerName: "Balbuena", imagePath: "/assets/players/balbuena.jpg", shirtNumber: 3 },
-        { position: "Lateral Esquerdo", playerName: "Fábio Santos", imagePath: "/assets/players/fabiosantos.jpg", shirtNumber: 6 },
-        { position: "Volante", playerName: "Du Queiroz", imagePath: "/assets/players/duqueiroz.jpg", shirtNumber: 37 },
-        { position: "Volante", playerName: "Fausto Vera", imagePath: "/assets/players/fausto.jpg", shirtNumber: 5 },
-        { position: "Meia", playerName: "Renato Augusto", imagePath: "/assets/players/renato.jpg", shirtNumber: 8 },
-        { position: "Atacante", playerName: "Róger Guedes", imagePath: "/assets/players/rogerguedes.jpg", shirtNumber: 9 },
-        { position: "Atacante", playerName: "Yuri Alberto", imagePath: "/assets/players/yurialberto.jpg", shirtNumber: 7 },
+        { position: "Goleiro", playerName: "Cássio", shirtNumber: 12 },
+        { position: "Lateral Direito", playerName: "Fagner", shirtNumber: 23 },
+        { position: "Zagueiro", playerName: "Gil", shirtNumber: 4 },
+        { position: "Zagueiro", playerName: "Balbuena", shirtNumber: 3 },
+        { position: "Lateral Esquerdo", playerName: "Fábio Santos", shirtNumber: 6 },
+        { position: "Volante", playerName: "Du Queiroz", shirtNumber: 37 },
+        { position: "Volante", playerName: "Fausto Vera", shirtNumber: 5 },
+        { position: "Meia", playerName: "Renato Augusto", shirtNumber: 8 },
+        { position: "Atacante", playerName: "Róger Guedes", shirtNumber: 9 },
+        { position: "Atacante", playerName: "Yuri Alberto", shirtNumber: 7 },
+        { position: "Atacante", playerName: "Adson", shirtNumber: 28 },
       ],
     },
     {
       match: "Final do Paulistão 2023",
+      date: "09/04/2023",
+      team: "Palmeiras",
+      opponent: "Água Santa",
       players: [
-        { position: "Goleiro", playerName: "Cássio", imagePath: "/assets/players/cassio.jpg", shirtNumber: 12 },
-        { position: "Lateral Direito", playerName: "Fagner", imagePath: "/assets/players/fagner.jpg", shirtNumber: 23 },
-        { position: "Zagueiro", playerName: "Bruno Méndez", imagePath: "/assets/players/brunomendez.jpg", shirtNumber: 25 },
-        { position: "Zagueiro", playerName: "Gil", imagePath: "/assets/players/gil.jpg", shirtNumber: 4 },
-        { position: "Lateral Esquerdo", playerName: "Matheus Bidu", imagePath: "/assets/players/bidu.jpg", shirtNumber: 26 },
-        { position: "Volante", playerName: "Maycon", imagePath: "/assets/players/maycon.jpg", shirtNumber: 29 },
-        { position: "Volante", playerName: "Fausto Vera", imagePath: "/assets/players/fausto.jpg", shirtNumber: 5 },
-        { position: "Meia", playerName: "Renato Augusto", imagePath: "/assets/players/renato.jpg", shirtNumber: 8 },
-        { position: "Atacante", playerName: "Róger Guedes", imagePath: "/assets/players/rogerguedes.jpg", shirtNumber: 10 },
-        { position: "Atacante", playerName: "Yuri Alberto", imagePath: "/assets/players/yurialberto.jpg", shirtNumber: 9 },
+        { position: "Goleiro", playerName: "Weverton", shirtNumber: 21 },
+        { position: "Lateral Direito", playerName: "Marcos Rocha", shirtNumber: 2 },
+        { position: "Zagueiro", playerName: "Gustavo Gómez", shirtNumber: 15 },
+        { position: "Zagueiro", playerName: "Murilo", shirtNumber: 26 },
+        { position: "Lateral Esquerdo", playerName: "Piquerez", shirtNumber: 22 },
+        { position: "Volante", playerName: "Zé Rafael", shirtNumber: 8 },
+        { position: "Volante", playerName: "Gabriel Menino", shirtNumber: 25 },
+        { position: "Meia", playerName: "Raphael Veiga", shirtNumber: 23 },
+        { position: "Atacante", playerName: "Dudu", shirtNumber: 7 },
+        { position: "Atacante", playerName: "Endrick", shirtNumber: 9 },
+        { position: "Atacante", playerName: "Rony", shirtNumber: 10 },
       ],
     },
   ];
