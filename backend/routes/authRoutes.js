@@ -1,51 +1,75 @@
 const express = require("express");
+const router = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const User = require("../models/User.js");
+const User = require("../models/User"); // seu modelo
 
-
-const router = express.Router();
-
-
-// Rota de Registro
+// POST /api/auth/register
 router.post("/register", async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { name, email, password } = req.body;
 
-    // Verificar se o usuário já existe
+    // Verifica se email já está em uso
     const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: "Email já cadastrado!" });
+    if (existingUser) {
+      return res.status(400).json({ error: "Usuário já existe." });
+    }
 
-    // Criptografar a senha
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Cria hash da senha
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Criar novo usuário
-    const newUser = new User({ username, email, password: hashedPassword });
+    // Cria novo usuário
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+    });
     await newUser.save();
 
-    res.status(201).json({ message: "Usuário cadastrado com sucesso!" });
+    res.status(201).json({ message: "Usuário registrado com sucesso!" });
   } catch (error) {
-    res.status(500).json({ message: "Erro no servidor" });
+    console.error("Erro no registro:", error);
+    res.status(500).json({ error: "Erro no servidor ao registrar." });
   }
 });
 
-// Rota de Login
+// POST /api/auth/login
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Busca usuário por email
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "Usuário não encontrado!" });
+    if (!user) {
+      return res.status(404).json({ error: "Usuário não encontrado." });
+    }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) return res.status(400).json({ message: "Senha incorreta!" });
+    // Compara senha
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.status(401).json({ error: "Senha incorreta." });
+    }
 
-    // Gerar token JWT
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    // Se deu certo, gera token JWT
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET || "chave-super-secreta",
+      { expiresIn: "1d" }
+    );
 
-    res.json({ token, username: user.username, score: user.score });
+    res.json({
+      message: "Login bem-sucedido!",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    });
   } catch (error) {
-    res.status(500).json({ message: "Erro no servidor" });
+    console.error("Erro no login:", error);
+    res.status(500).json({ error: "Erro no servidor ao logar." });
   }
 });
 

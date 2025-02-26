@@ -1,71 +1,125 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default function Home() {
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export default function HomePage() {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+
+  // Lê "user" do localStorage (se existir) e atualiza o estado
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  // Função para deslogar
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-white text-black">
+    <div className="min-h-screen bg-gradient-to-r from-gray-100 to-gray-200 text-black flex flex-col">
       {/* Cabeçalho Premium */}
-      <motion.h1
-        className="text-6xl font-extrabold mb-10 tracking-wide text-center bg-clip-text text-transparent bg-gradient-to-r from-yellow-500 to-yellow-400 drop-shadow-lg"
-        initial={{ opacity: 0, y: -30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1 }}
-      >
-        🏆 MagoNegroGames 🏆
-      </motion.h1>
+      <header className="flex items-center justify-between p-6 bg-white shadow-md">
+        <div className="text-lg font-bold text-yellow-600">
+          {user ? (
+            <div className="flex items-center gap-4">
+              <span>Bem-vindo, {user.name}!</span>
+              <button onClick={handleLogout} className="text-red-600 underline">
+                Sair
+              </button>
+            </div>
+          ) : (
+            <span>Olá, Visitante</span>
+          )}
+        </div>
+        <h1 className="text-3xl font-extrabold text-yellow-700">
+          MagoNegroGames Deluxe
+        </h1>
+      </header>
 
-      {/* Subtítulo */}
-      <p className="text-lg text-gray-700 text-center max-w-2xl mb-10">
-        Teste seus conhecimentos e desafie-se em jogos interativos e emocionantes!
-      </p>
+      {/* Conteúdo principal: Grid de ícones/menus */}
+      <main className="flex-1 flex flex-col items-center justify-center p-10">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-700">
+            Escolha uma das opções:
+          </h2>
+        </div>
 
-      {/* Grid de Jogos */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 w-full max-w-6xl">
-        {/* Jogo 1 */}
-        <Link href="/game" className="transform hover:scale-105 transition">
-          <motion.div
-            className="bg-white shadow-xl rounded-2xl p-6 border border-yellow-500 hover:shadow-yellow-400/50 text-center transition-all"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.8 }}
-          >
-            <h2 className="text-2xl font-bold mb-3 text-yellow-500">🔍 Jogo de Adivinhação</h2>
-            <p className="text-gray-600">Adivinhe onde e quando a foto foi tirada.</p>
-          </motion.div>
-        </Link>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
+          {/* Ícone 1: Login */}
+          <Link href="/login" className="flex flex-col items-center group">
+            <div className="bg-white p-4 rounded-full shadow-lg hover:shadow-yellow-400 transition">
+              <img
+                src="/assets/icons/login.png"
+                alt="Login Icon"
+                className="w-12 h-12"
+              />
+            </div>
+            <span className="mt-2 text-lg font-medium group-hover:text-yellow-600">
+              Login
+            </span>
+          </Link>
 
-        {/* Jogo 2 */}
-        <Link href="/game2" className="transform hover:scale-105 transition">
-          <motion.div
-            className="bg-white shadow-xl rounded-2xl p-6 border border-yellow-500 hover:shadow-yellow-400/50 text-center transition-all"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.8 }}
-          >
-            <h2 className="text-2xl font-bold mb-3 text-yellow-500">🎭 Jogo 2</h2>
-            <p className="text-gray-600">Descubra o jogador a partir da imagem borrada.</p>
-          </motion.div>
-        </Link>
+          {/* Ícone 2: Registrar */}
+          <Link href="/register" className="flex flex-col items-center group">
+            <div className="bg-white p-4 rounded-full shadow-lg hover:shadow-yellow-400 transition">
+              <img
+                src="/assets/icons/register.png"
+                alt="Register Icon"
+                className="w-12 h-12"
+              />
+            </div>
+            <span className="mt-2 text-lg font-medium group-hover:text-yellow-600">
+              Registrar
+            </span>
+          </Link>
 
-        {/* Jogo 3 agora está ativado */}
-        <Link href="/game3" className="transform hover:scale-105 transition">
-          <motion.div
-            className="bg-white shadow-xl rounded-2xl p-6 border border-yellow-500 hover:shadow-yellow-400/50 text-center transition-all"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.8 }}
-          >
-            <h2 className="text-2xl font-bold mb-3 text-yellow-500">⚽ Jogo 3</h2>
-            <p className="text-gray-600">Monte a escalação correta e teste seus conhecimentos!</p>
-          </motion.div>
-        </Link>
-      </div>
+          {/* Ícone 3: Jogar (Game3) */}
+          <Link href="/game3" className="flex flex-col items-center group">
+            <div className="bg-white p-4 rounded-full shadow-lg hover:shadow-yellow-400 transition">
+              <img
+                src="/assets/icons/controller.png"
+                alt="Game Icon"
+                className="w-12 h-12"
+              />
+            </div>
+            <span className="mt-2 text-lg font-medium group-hover:text-yellow-600">
+              Jogar
+            </span>
+          </Link>
+
+          {/* Ícone 4: Ranking */}
+          <Link href="/ranking" className="flex flex-col items-center group">
+            <div className="bg-white p-4 rounded-full shadow-lg hover:shadow-yellow-400 transition">
+              <img
+                src="/assets/icons/trophy.png"
+                alt="Ranking Icon"
+                className="w-12 h-12"
+              />
+            </div>
+            <span className="mt-2 text-lg font-medium group-hover:text-yellow-600">
+              Ranking
+            </span>
+          </Link>
+        </div>
+      </main>
 
       {/* Rodapé */}
-      <footer className="mt-16 text-center text-gray-600">
-        <p className="text-sm">© 2025 MagoNegroGames. Todos os direitos reservados.</p>
+      <footer className="bg-white p-4 text-center text-gray-500 text-sm">
+        © {new Date().getFullYear()} MagoNegroGames - Todos os direitos reservados.
       </footer>
     </div>
   );

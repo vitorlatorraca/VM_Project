@@ -18,54 +18,67 @@ mongoose
   .then(async () => {
     console.log("🌱 Conectado ao MongoDB para seed de jogadores...");
 
-    // Remover jogadores antigos
+    // Remove jogadores e times antigos, para "zerar" a coleção
     await Player.deleteMany({});
-    await Team.deleteMany({}); // Remove times antigos antes de recriar
+    await Team.deleteMany({});
 
-    // Criar times
+    // Cria alguns times de exemplo
     const teams = await Team.insertMany([
       { name: "Corinthians", logoPath: "/assets/teams/corinthians.png" },
       { name: "Atlético de Madrid", logoPath: "/assets/teams/atletico_madrid.png" }
     ]);
 
-    const corinthians = teams.find(team => team.name === "Corinthians");
-    const atleticoMadrid = teams.find(team => team.name === "Atlético de Madrid");
+    // Localiza as referências
+    const corinthians = teams.find((team) => team.name === "Corinthians");
+    const atleticoMadrid = teams.find((team) => team.name === "Atlético de Madrid");
 
-    // Lista de jogadores a serem inseridos
+    // Lista de jogadores (com os novos campos)
     const players = [
       {
         imagePath: "/assets/players/Garro.jpg",
         playerName: "Garro",
         fullName: "Rodrigo Garro",
-        age: 26,
+        nationality: "Argentina",
+        league: "Brasileirão",
+        club: "Corinthians",
         position: "Meia",
+        age: 26,
         shirtNumber: 10,
-        team: corinthians._id // Relacionando ao time correto
+        team: corinthians._id
       },
       {
         imagePath: "/assets/players/memphis.jpg",
         playerName: "Memphis",
         fullName: "Memphis Depay",
-        age: 30,
+        nationality: "Netherlands",
+        league: "La Liga",
+        club: "Atlético de Madrid",
         position: "Atacante",
+        age: 30,
         shirtNumber: 9,
-        team: corinthians._id
+        team: atleticoMadrid._id
       },
       {
         imagePath: "/assets/players/yurialberto.jpg",
         playerName: "Yuri Alberto",
         fullName: "Yuri Alberto Monteiro",
-        age: 23,
+        nationality: "Brazil",
+        league: "Brasileirão",
+        club: "Corinthians",
         position: "Atacante",
+        age: 23,
         shirtNumber: 9,
         team: corinthians._id
       }
     ];
 
-    // Inserir jogadores no MongoDB
+    // Insere os jogadores
     await Player.insertMany(players);
 
     console.log("✅ Seed de jogadores inserido com sucesso!");
     mongoose.connection.close();
   })
-  .catch((error) => console.error("❌ Erro ao conectar ao MongoDB:", error));
+  .catch((error) => {
+    console.error("❌ Erro ao conectar ao MongoDB:", error);
+    process.exit(1);
+  });
