@@ -67,6 +67,7 @@ mongoose
           { position: "Atacante 3", playerName: "Rony", shirtNumber: 10 },
         ],
       },
+      
     ];
 
     // 📌 Inserindo as novas escalações no banco

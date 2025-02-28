@@ -7,7 +7,7 @@ const User = require("../models/User");
 router.patch("/score", authMiddleware, async (req, res) => {
   try {
     const { errors } = req.body; // número de erros ou outro critério
-    // Pontuação que usuário ganha: por ex: 10 - errors (nunca menos de 0)
+    // Pontuação que usuário ganha: ex.: 10 - errors (mínimo 0)
     const pointsGained = Math.max(0, 10 - errors);
 
     const user = await User.findById(req.userId);

@@ -21,13 +21,15 @@ const photoRoutes = require("./routes/photoRoutes");
 const stadiumRoutes = require("./routes/stadiumRoutes");
 const playerRoutes = require("./routes/playerRoutes");
 const firstElevenRoutes = require("./routes/firstElevenRoutes");
+const userRoutes = require("./routes/userRoutes"); // <-- Novo
 
 // ---- Usar Rotas ----
-app.use("/api/auth", authRoutes);          // Rotas de autenticação
+app.use("/api/auth", authRoutes);
 app.use("/api/photos", photoRoutes);
 app.use("/api/stadiums", stadiumRoutes);
 app.use("/api/players", playerRoutes);
 app.use("/api/first-eleven", firstElevenRoutes);
+app.use("/api/users", userRoutes); // <-- Registra as rotas de usuários
 
 // ---- Conexão ao MongoDB ----
 mongoose

@@ -53,6 +53,9 @@ const Game3: React.FC = () => {
   const [correctPlayers, setCorrectPlayers] = useState<string[]>([]);
   const [attemptsLeft, setAttemptsLeft] = useState(5);
 
+  // Novo: total de erros (tentativas erradas) para computar pontuação
+  const [totalErrors, setTotalErrors] = useState(0);
+
   // Sorteia um jogo ao carregar
   useEffect(() => {
     const fetchMatchData = async () => {
@@ -73,6 +76,31 @@ const Game3: React.FC = () => {
     fetchMatchData();
   }, []);
 
+  // Função que chama a API para atualizar score
+  // (Chamada ao final, quando o user acerta todos)
+  async function updateScore(errors: number) {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.warn("Usuário não está logado. Não é possível atualizar score.");
+        return;
+      }
+
+      await axios.patch(
+        "http://localhost:5000/api/users/score",
+        { errors },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log("Score atualizado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao atualizar score:", error);
+    }
+  }
+
   // Abre o modal, resetando feedback e tentativas
   const handlePlayerClick = (player: Player) => {
     if (!correctPlayers.includes(player.playerName)) {
@@ -91,18 +119,35 @@ const Game3: React.FC = () => {
     const correctName = normalizeString(selectedPlayer.playerName);
     const userGuess = normalizeString(guess);
 
-    // Se acertar, fecha o modal imediatamente
+    // Se acertar
     if (userGuess === correctName) {
       setMessage("🎉 Acertou! Parabéns!");
-      setCorrectPlayers((prev) => [...prev, selectedPlayer.playerName]);
+      // Marca jogador como correto
+      setCorrectPlayers((prev) => {
+        const updated = [...prev, selectedPlayer.playerName];
 
-      // Fechar o modal automaticamente:
+        // Se este acerto for o último jogador
+        if (updated.length === (matchData?.players.length ?? 0)) {
+          // Exibimos a mensagem final
+          // e chamamos updateScore passando totalErrors
+          updateScore(totalErrors);
+
+          // Zera os erros para caso reinicie
+          setTotalErrors(0);
+        }
+
+        return updated;
+      });
+
+      // Fecha o modal automaticamente
       setSelectedPlayer(null);
-
-      return; 
+      return;
     }
 
-    // Caso tenha errado, gerar feedback estilo "Wordle"
+    // Caso erre => feedback estilo Wordle
+    // e incrementa totalErrors
+    setTotalErrors((prev) => prev + 1);
+
     let tempFeedback = Array(correctName.length).fill({
       letter: "",
       color: "bg-gray-400",
@@ -118,7 +163,7 @@ const Game3: React.FC = () => {
       }
     });
 
-    // Amarelo (existe, mas fora de posição)
+    // Amarelo (existe, mas em outra posição)
     userGuess.split("").forEach((char, index) => {
       if (tempFeedback[index].color === "bg-green-500") return;
       const matchIndex = correctName.indexOf(char);
@@ -128,7 +173,6 @@ const Game3: React.FC = () => {
       }
     });
 
-    // Seta feedback e reduz tentativas
     setFeedbackHistory((prev) => [...prev, tempFeedback]);
     setAttemptsLeft((prev) => prev - 1);
 
@@ -189,7 +233,6 @@ const Game3: React.FC = () => {
                         className="w-16"
                       />
                       <span className="text-white text-sm mt-2">
-                        {/* Sem ponto de interrogação */}
                         {position}
                       </span>
                       <span className="text-yellow-300 font-bold">
@@ -240,7 +283,7 @@ const Game3: React.FC = () => {
             />
             <button
               onClick={handleSubmit}
-              className="bg-yellow-600 text-white px-4 py-2 rounded font-bold hover:bg-yellow-700 transition-colors"
+              className="bg-yellow-600 text-white px-4 py-2 rounded font-bold hover:bg-yellow-700 transition-colors w-full"
             >
               Enviar
             </button>
