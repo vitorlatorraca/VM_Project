@@ -170,7 +170,7 @@ export default function HomePage() {
       {/* RODAPÉ */}
       <footer className="bg-yellow-700 text-white text-center p-4">
         <p className="text-sm">
-          © {new Date().getFullYear()} MagoNegroGames Deluxe - Todos os direitos
+          © {new Date().getFullYear()} MagoNegroGames Deluxe - Todos os direitos!
           reservados
         </p>
       </footer>
