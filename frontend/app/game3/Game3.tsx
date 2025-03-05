@@ -11,6 +11,7 @@ interface Player {
 }
 
 interface Match {
+  dayIndex: number;        // <-- identificador do dia
   match: string;
   date: string;
   opponent: string;
@@ -20,7 +21,6 @@ interface Match {
   players: Player[];
 }
 
-// Inverteu lateral direito e esquerdo
 const FIELD_POSITIONS = [
   ["Goleiro"],
   ["Lateral Direito", "Zagueiro 1", "Zagueiro 2", "Lateral Esquerdo"],
@@ -28,12 +28,11 @@ const FIELD_POSITIONS = [
   ["Atacante 1", "Atacante 2", "Atacante 3"],
 ];
 
+// Normaliza a string (remover acentos, etc.)
 const normalizeString = (str: string) =>
-  str
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
+  str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
+// Função para mascarar o nome do jogador, se não tiver sido acertado
 const maskPlayerName = (name: string, isRevealed: boolean) => {
   if (isRevealed) return name;
   return name
@@ -42,8 +41,24 @@ const maskPlayerName = (name: string, isRevealed: boolean) => {
     .join(" ");
 };
 
+// Define que 04/03/2025 é o dia 1 (ajuste o ano se necessário)
+function getTodayDayIndex(): number {
+  const startDate = new Date("2025-03-04"); // Dia 1
+  const now = new Date();
+  const diff = Math.floor(
+    (now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+  );
+  return diff + 1; // dayIndex = 1 no dia 04/03/2025
+}
+
 const Game3: React.FC = () => {
+  const [allMatches, setAllMatches] = useState<Match[]>([]);
   const [matchData, setMatchData] = useState<Match | null>(null);
+
+  const [currentDay, setCurrentDay] = useState<number>(1); // Dia exibido
+  const [todayDayIndex, setTodayDayIndex] = useState<number>(1); // Dia máximo disponível
+
+  // Estados para adivinhar jogadores
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [guess, setGuess] = useState("");
   const [message, setMessage] = useState("");
@@ -53,31 +68,41 @@ const Game3: React.FC = () => {
   const [correctPlayers, setCorrectPlayers] = useState<string[]>([]);
   const [attemptsLeft, setAttemptsLeft] = useState(5);
 
-  // Novo: total de erros (tentativas erradas) para computar pontuação
+  // Total de erros (tentativas erradas)
   const [totalErrors, setTotalErrors] = useState(0);
 
-  // Sorteia um jogo ao carregar
+  // Carrega todas as escalações e define o dia atual
   useEffect(() => {
-    const fetchMatchData = async () => {
+    const fetchMatches = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/first-eleven");
-        const allMatches: Match[] = res.data;
+        const data: Match[] = res.data;
 
-        if (allMatches.length > 0) {
-          const randomIndex = Math.floor(Math.random() * allMatches.length);
-          setMatchData(allMatches[randomIndex]);
+        setAllMatches(data);
+
+        // Calcula o dia atual (todayDayIndex)
+        const dayIndex = getTodayDayIndex();
+        setTodayDayIndex(dayIndex);
+
+        // Filtra apenas escalações cujo dayIndex <= dayIndex atual
+        const availableMatches = data.filter((m) => m.dayIndex <= dayIndex);
+
+        if (availableMatches.length === 0) {
+          console.warn("Nenhuma escalação disponível para hoje ou dias anteriores.");
         } else {
-          console.warn("Não há jogos no banco.");
+          // Pega a última escalação disponível
+          const lastMatch = availableMatches.sort((a, b) => b.dayIndex - a.dayIndex)[0];
+          setCurrentDay(lastMatch.dayIndex);
+          setMatchData(lastMatch);
         }
       } catch (error) {
         console.error("Erro ao buscar escalações:", error);
       }
     };
-    fetchMatchData();
+    fetchMatches();
   }, []);
 
-  // Função que chama a API para atualizar score
-  // (Chamada ao final, quando o user acerta todos)
+  // Atualiza score no back-end
   async function updateScore(errors: number) {
     try {
       const token = localStorage.getItem("token");
@@ -101,7 +126,50 @@ const Game3: React.FC = () => {
     }
   }
 
-  // Abre o modal, resetando feedback e tentativas
+  // Navegar para dia anterior
+  const handlePreviousDay = () => {
+    if (currentDay <= 1) return; // não deixa ir abaixo de 1
+
+    const newDay = currentDay - 1;
+    const found = allMatches.find((m) => m.dayIndex === newDay);
+    if (!found) {
+      console.warn("Não há escalação para o dia " + newDay);
+      return;
+    }
+
+    resetGuessState();
+    setCurrentDay(newDay);
+    setMatchData(found);
+  };
+
+  // Navegar para próximo dia (até o dia atual)
+  const handleNextDay = () => {
+    if (currentDay >= todayDayIndex) return; // não avança além de hoje
+
+    const newDay = currentDay + 1;
+    const found = allMatches.find((m) => m.dayIndex === newDay);
+    if (!found) {
+      console.warn("Não há escalação para o dia " + newDay);
+      return;
+    }
+
+    resetGuessState();
+    setCurrentDay(newDay);
+    setMatchData(found);
+  };
+
+  // Resetar estado de adivinhação
+  const resetGuessState = () => {
+    setSelectedPlayer(null);
+    setGuess("");
+    setMessage("");
+    setFeedbackHistory([]);
+    setCorrectPlayers([]);
+    setAttemptsLeft(5);
+    setTotalErrors(0);
+  };
+
+  // Lógica de clique no jogador
   const handlePlayerClick = (player: Player) => {
     if (!correctPlayers.includes(player.playerName)) {
       setSelectedPlayer(player);
@@ -112,7 +180,7 @@ const Game3: React.FC = () => {
     }
   };
 
-  // Verifica se o palpite está certo
+  // Lógica de envio de palpite
   const handleSubmit = () => {
     if (!selectedPlayer || attemptsLeft <= 0) return;
 
@@ -122,20 +190,17 @@ const Game3: React.FC = () => {
     // Se acertar
     if (userGuess === correctName) {
       setMessage("🎉 Acertou! Parabéns!");
+
       // Marca jogador como correto
       setCorrectPlayers((prev) => {
         const updated = [...prev, selectedPlayer.playerName];
 
         // Se este acerto for o último jogador
         if (updated.length === (matchData?.players.length ?? 0)) {
-          // Exibimos a mensagem final
-          // e chamamos updateScore passando totalErrors
+          // Atualiza score com totalErrors
           updateScore(totalErrors);
-
-          // Zera os erros para caso reinicie
           setTotalErrors(0);
         }
-
         return updated;
       });
 
@@ -144,8 +209,7 @@ const Game3: React.FC = () => {
       return;
     }
 
-    // Caso erre => feedback estilo Wordle
-    // e incrementa totalErrors
+    // Se errou => feedback estilo Wordle
     setTotalErrors((prev) => prev + 1);
 
     let tempFeedback = Array(correctName.length).fill({
@@ -155,7 +219,7 @@ const Game3: React.FC = () => {
 
     let usedIndices: boolean[] = new Array(correctName.length).fill(false);
 
-    // Verde (mesma posição)
+    // Marca verde (mesma posição)
     userGuess.split("").forEach((char, index) => {
       if (char === correctName[index]) {
         tempFeedback[index] = { letter: char, color: "bg-green-500" };
@@ -163,7 +227,7 @@ const Game3: React.FC = () => {
       }
     });
 
-    // Amarelo (existe, mas em outra posição)
+    // Marca amarelo (existe em outra posição)
     userGuess.split("").forEach((char, index) => {
       if (tempFeedback[index].color === "bg-green-500") return;
       const matchIndex = correctName.indexOf(char);
@@ -183,19 +247,42 @@ const Game3: React.FC = () => {
     }
   };
 
+  // Render
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-200 px-8 py-12 text-black">
       <h1 className="text-4xl font-extrabold mb-6 text-yellow-700 uppercase tracking-wider text-center">
         Escalações da História do Futebol Brasileiro
       </h1>
 
-      {!matchData && <p>Carregando jogo aleatório...</p>}
+      {/* Botões de navegação entre dias */}
+      <div className="flex gap-4 mb-4">
+        <button
+          onClick={handlePreviousDay}
+          className="bg-yellow-700 text-white px-4 py-2 rounded disabled:opacity-50"
+          disabled={currentDay <= 1}
+        >
+          Dia Anterior
+        </button>
+        <button
+          onClick={handleNextDay}
+          className="bg-yellow-700 text-white px-4 py-2 rounded disabled:opacity-50"
+          disabled={currentDay >= todayDayIndex}
+        >
+          Próximo Dia
+        </button>
+      </div>
+
+      {!matchData && (
+        <p>
+          Carregando escalação... ou nenhuma escalação disponível para este dia.
+        </p>
+      )}
 
       {matchData && (
         <>
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-yellow-700">
-              {matchData.match}
+              Dia #{matchData.dayIndex} — {matchData.match}
             </h2>
             <p className="text-lg">
               {matchData.team} x {matchData.opponent}
@@ -253,7 +340,7 @@ const Game3: React.FC = () => {
         </>
       )}
 
-      {/* Modal (aparece somente se selectedPlayer não estiver nulo) */}
+      {/* Modal de palpite (se selectedPlayer != null) */}
       {selectedPlayer && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-yellow-50 border-4 border-yellow-600 p-6 rounded-lg shadow-lg text-center text-black max-w-sm w-full">
@@ -290,7 +377,7 @@ const Game3: React.FC = () => {
 
             <p className="mt-4 font-semibold">{message}</p>
 
-            {/* Fechar manualmente, se o usuário quiser */}
+            {/* Botão de fechar manual */}
             <button
               onClick={() => setSelectedPlayer(null)}
               className="mt-4 text-red-600 underline"
