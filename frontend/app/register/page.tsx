@@ -11,9 +11,13 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error" | "">("");
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Log para verificar se o front-end está realmente enviando 'name'
+    console.log("Tentando registrar com dados:", { name, email, password });
 
     try {
       const res = await axios.post("http://localhost:5000/api/auth/register", {
@@ -21,21 +25,29 @@ export default function RegisterPage() {
         email,
         password,
       });
-      setMessage("Usuário registrado com sucesso! Faça login agora.");
-      
 
-      // Redireciona para /login após um tempinho, se quiser
+      console.log("Resposta do servidor:", res.data);
+
+      setMessageType("success");
+      setMessage("Usuário registrado com sucesso! Faça login agora.");
+
+      // Redireciona para /login após 1,5s (ajuste conforme desejar)
       setTimeout(() => {
         router.push("/login");
       }, 1500);
     } catch (error: any) {
+      console.error("Erro ao registrar:", error.response?.data);
+      setMessageType("error");
       setMessage(error.response?.data?.error || "Erro ao registrar");
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <form onSubmit={handleRegister} className="max-w-sm w-full bg-white p-6 rounded shadow">
+      <form
+        onSubmit={handleRegister}
+        className="max-w-sm w-full bg-white p-6 rounded shadow"
+      >
         <h1 className="text-2xl font-bold mb-4">Criar Conta</h1>
 
         <div className="mb-4">
@@ -90,7 +102,15 @@ export default function RegisterPage() {
           Registrar
         </button>
 
-        {message && <p className="mt-3 text-center text-red-500">{message}</p>}
+        {message && (
+          <p
+            className={`mt-3 text-center ${
+              messageType === "success" ? "text-green-600" : "text-red-500"
+            }`}
+          >
+            {message}
+          </p>
+        )}
       </form>
     </div>
   );
