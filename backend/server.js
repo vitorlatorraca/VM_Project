@@ -12,8 +12,11 @@ app.use(express.json());
 app.use(cors());
 
 // ---- Servir arquivos estáticos ----
-// Supondo que você armazene as imagens e outros assets em "public/assets"
+// Pasta de assets gerais
 app.use("/assets", express.static(path.join(__dirname, "public/assets")));
+
+// Pasta de uploads (onde Multer salva as fotos)
+app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
 // ---- Importar Rotas ----
 const authRoutes = require("./routes/authRoutes");
@@ -21,7 +24,7 @@ const photoRoutes = require("./routes/photoRoutes");
 const stadiumRoutes = require("./routes/stadiumRoutes");
 const playerRoutes = require("./routes/playerRoutes");
 const firstElevenRoutes = require("./routes/firstElevenRoutes");
-const userRoutes = require("./routes/userRoutes"); // <-- Novo
+const userRoutes = require("./routes/userRoutes"); // <-- Rotas de usuários
 
 // ---- Usar Rotas ----
 app.use("/api/auth", authRoutes);
@@ -29,7 +32,7 @@ app.use("/api/photos", photoRoutes);
 app.use("/api/stadiums", stadiumRoutes);
 app.use("/api/players", playerRoutes);
 app.use("/api/first-eleven", firstElevenRoutes);
-app.use("/api/users", userRoutes); // <-- Registra as rotas de usuários
+app.use("/api/users", userRoutes); // <-- Rotas de usuários
 
 // ---- Conexão ao MongoDB ----
 mongoose

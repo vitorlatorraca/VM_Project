@@ -212,7 +212,7 @@ export default function HomePage() {
                 }`}
             >
               <img
-                src="/assets/icons/user.png"
+                src="/assets/icons/profile.png"
                 alt="Profile Icon"
                 className="w-16 h-16 mb-4"
               />
