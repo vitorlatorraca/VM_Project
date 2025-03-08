@@ -10,20 +10,31 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [avatar, setAvatar] = useState<File | null>(null); // Novo: arquivo da foto
+
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Log para verificar se o front-end está realmente enviando 'name'
     console.log("Tentando registrar com dados:", { name, email, password });
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/register", {
-        name,
-        email,
-        password,
+      // Precisamos de FormData para enviar arquivo + campos de texto
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("email", email);
+      formData.append("password", password);
+
+      if (avatar) {
+        formData.append("avatar", avatar); // Campo "avatar" para bater com upload.single("avatar")
+      }
+
+      const res = await axios.post("http://localhost:5000/api/auth/register", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
       console.log("Resposta do servidor:", res.data);
@@ -31,7 +42,11 @@ export default function RegisterPage() {
       setMessageType("success");
       setMessage("Usuário registrado com sucesso! Faça login agora.");
 
-      // Redireciona para /login após 1,5s (ajuste conforme desejar)
+      // Se quiser já armazenar token e user
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+
+      // Redireciona para /login após 1,5s
       setTimeout(() => {
         router.push("/login");
       }, 1500);
@@ -92,6 +107,24 @@ export default function RegisterPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+          />
+        </div>
+
+        {/* Novo campo para foto de perfil (opcional) */}
+        <div className="mb-4">
+          <label htmlFor="avatarFile" className="block text-sm font-semibold mb-1">
+            Foto de Perfil (opcional)
+          </label>
+          <input
+            id="avatarFile"
+            type="file"
+            accept="image/*"
+            className="border w-full p-2 rounded"
+            onChange={(e) => {
+              if (e.target.files && e.target.files[0]) {
+                setAvatar(e.target.files[0]);
+              }
+            }}
           />
         </div>
 
