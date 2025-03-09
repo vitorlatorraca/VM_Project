@@ -7,7 +7,7 @@ const path = require("path");
 
 const app = express();
 
-// ---- Middleware básico ----
+// ---- Middleware básico 
 app.use(express.json());
 app.use(cors());
 
