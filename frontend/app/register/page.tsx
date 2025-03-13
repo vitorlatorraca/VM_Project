@@ -110,7 +110,7 @@ export default function RegisterPage() {
           />
         </div>
 
-        {/* Novo campo para foto de perfil (opcional) */}
+        {/* Novo campo para foto de perfil*/}
         <div className="mb-4">
           <label htmlFor="avatarFile" className="block text-sm font-semibold mb-1">
             Foto de Perfil (opcional)
